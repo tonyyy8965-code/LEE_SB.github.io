@@ -255,119 +255,108 @@
 
             <div id="results-container">
                 
-                <div class="result-group questions" id="mock-questions">
-                    <h3>예상 면접 질문</h3>
-                    <p class="initial-placeholder">여기에 자기소개서를 기반으로 한 예상 질문들이 표시됩니다.</p>
-                </div>
-                
-                <div class="result-group answers" id="answer-examples">
-                    <h3>답변 예시</h3>
-                    <p class="initial-placeholder">여기에 질문에 대한 답변 보강 전략과 예시가 표시됩니다.</p>
-                </div>
-            </div>
-        </section>
+               <div class="result-group answers" id="answer-examples">
+            <h3>답변 예시</h3>
+            <p class="initial-placeholder">여기에 질문에 대한 답변 보강 전략과 예시가 표시됩니다.</p>
+        </div>
     </div>
+</section>
+</div>
 
-    <script>
-        // 🚨 중요 수정: SERVER_URL을 Replit 환경의 상대 경로로 다시 설정합니다.
-        // 절대 URL (https://...)을 사용하면 경로가 중복되어 fetch 요청이 실패했습니다.
-        // 같은 호스트에서 실행할 경우, 빈 문자열 ("")을 사용하여 상대 경로를 사용하는 것이 가장 안정적입니다.
-        const SERVER_URL = "https://20c1e870-4c52-4f3e-950a-d7b34da312be-00-7tu0mb8udfqp.sisko.replit.dev/generate_minutes";
+<script>
+    // Replit 환경에서 최적인 '상대 경로' 사용
+    const SERVER_URL = "https://20c1e870-4c52-4f3e-950a-d7b34da312be-00-7tu0mb8udfqp.sisko.replit.dev/generate_minutes"; 
 
-        async function register(event) {
-            event.preventDefault(); 
-            
-            const submitButton = document.getElementById('submit-button');
-            const statusDisplay = document.getElementById('status-display');
-            const mockQuestionsDiv = document.getElementById('mock-questions');
-            const answerExamplesDiv = document.getElementById('answer-examples');
-            
-            // 1. 입력 데이터 수집
-            const data = {
-                company: document.getElementById('company').value,
-                role: document.getElementById('role').value,
-                question: document.getElementById('question').value,
-                answer: document.getElementById('answer').value,
-            };
+    async function register(event) {
+        // HTML form에서 onclick="register(event)"로 호출되므로 event.preventDefault() 필요
+        event.preventDefault(); 
+        
+        const submitButton = document.getElementById('submit-button');
+        const statusDisplay = document.getElementById('status-display');
+        const mockQuestionsDiv = document.getElementById('mock-questions');
+        const answerExamplesDiv = document.getElementById('answer-examples');
+        
+        // 1. 입력 데이터 수집
+        const data = {
+            company: document.getElementById('company').value,
+            role: document.getElementById('role').value,
+            question: document.getElementById('question').value,
+            answer: document.getElementById('answer').value,
+        };
 
-            // 간단한 유효성 검사
-            if (!data.company || !data.role || !data.question || !data.answer) {
-                statusDisplay.textContent = "⚠️ 모든 필드를 채워주세요.";
-                statusDisplay.style.backgroundColor = '#ffebee';
-                return;
-            }
-
-            // UI 상태 변경: 로딩 시작
-            submitButton.disabled = true;
-            submitButton.textContent = "AI 분석 중... 잠시만 기다려주세요."; 
-            statusDisplay.textContent = "⌛ Gemini가 예상 질문을 분석하고 있습니다...";
-            statusDisplay.style.backgroundColor = '#e3f2fd';
-
-            // 기존 결과 및 초기 플레이스홀더 제거 (로딩 시)
-            mockQuestionsDiv.innerHTML = '<h3>예상 면접 질문</h3>';
-            answerExamplesDiv.innerHTML = '<h3>답변 예시</h3>';
-
-            try {
-                // 🚨 중요 수정: fetch 요청 URL을 'SERVER_URL + /generate_minutes'에서 '/generate_minutes'로 수정
-                // SERVER_URL이 ""이므로, 요청은 fetch('/generate_minutes', ...)가 되어
-                // 서버의 기본 경로로 올바르게 요청이 전달됩니다.
-                const response = await fetch('/generate_minutes', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(data),
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.detail || `HTTP 오류: ${response.status}`);
-                }
-
-                const result = await response.json(); 
-
-                // 2. UI 상태 변경: 성공
-                statusDisplay.textContent = "✅ AI 분석 성공! 아래 결과를 확인하세요.";
-                statusDisplay.style.backgroundColor = '#e8f5e9';
-                
-                // 3. 결과 표시 함수 호출
-                displayResults(result); 
-
-            } catch (error) {
-                // 통신 오류, JSON 파싱 오류, 서버 오류 등 처리
-                statusDisplay.textContent = `❌ 오류 발생: ${error.message}. 콘솔을 확인하세요.`;
-                statusDisplay.style.backgroundColor = '#ffcdd2';
-                console.error('Fetch 또는 API 처리 오류:', error);
-            } finally {
-                // UI 상태 변경: 로딩 종료
-                submitButton.disabled = false;
-                submitButton.textContent = "AI 예상 질문 생성"; 
-            }
+        // 간단한 유효성 검사
+        if (!data.company || !data.role || !data.question || !data.answer) {
+            statusDisplay.textContent = "⚠️ 모든 필드를 채워주세요.";
+            statusDisplay.style.backgroundColor = '#ffebee';
+            return;
         }
 
+        // UI 상태 변경: 로딩 시작
+        submitButton.disabled = true;
+        submitButton.textContent = "AI 분석 중... 잠시만 기다려주세요."; 
+        statusDisplay.textContent = "⌛ Gemini가 예상 질문을 분석하고 있습니다...";
+        statusDisplay.style.backgroundColor = '#e3f2fd';
 
-        // Gemini의 JSON 응답을 화면에 깔끔하게 뿌려주는 함수 (임시 JSON 출력 대신)
-        function displayResults(data) {
-            const mockQuestionsDiv = document.getElementById('mock-questions');
-            const answerExamplesDiv = document.getElementById('answer-examples');
-            
-            // AI가 생성한 JSON 응답 구조를 알 수 없으므로, 현재는 임시로 응답 전체를 출력합니다.
-            // (백엔드 프롬프트에 따라 질문과 전략이 포함된 JSON이 전달될 것으로 가정)
-            
-            // JSON을 HTML 형식으로 예쁘게 포맷팅하여 표시합니다.
-            const formattedJson = JSON.stringify(data, null, 2);
+        // 기존 결과 및 초기 플레이스홀더 제거 (로딩 시)
+        mockQuestionsDiv.innerHTML = '<h3>예상 면접 질문</h3>';
+        answerExamplesDiv.innerHTML = '<h3>답변 예시</h3>';
 
-            mockQuestionsDiv.innerHTML = `
-                <h3>AI 분석 응답 (JSON 원본)</h3>
-                <pre style="white-space: pre-wrap; word-wrap: break-word; font-size: 0.8em; background: #fafafa; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">${formattedJson}</pre>
-            `;
+        try {
+            // fetch 요청은 상대 경로를 사용하여 서버로 전송
+            const response = await fetch('/generate_minutes', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || `HTTP 오류: ${response.status}`);
+            }
+
+            const result = await response.json(); 
+
+            // 2. UI 상태 변경: 성공
+            statusDisplay.textContent = "✅ AI 분석 성공! 아래 결과를 확인하세요.";
+            statusDisplay.style.backgroundColor = '#e8f5e9';
             
-            answerExamplesDiv.innerHTML = `
-                <h3>응답 처리 안내</h3>
-                <p>백엔드에서 JSON 응답을 성공적으로 수신했습니다. 이 JSON 데이터(좌측)에는 예상 질문과 답변 전략이 포함되어 있습니다.</p>
-                <p>다음 단계는 **수신된 JSON 구조에 맞춰** `displayResults` 함수를 업데이트하여 질문과 전략을 분리해 화면에 표시하는 것입니다.</p>
-            `;
+            // 3. 결과 표시 함수 호출
+            displayResults(result); 
+
+        } catch (error) {
+            // 통신 오류, JSON 파싱 오류, 서버 오류 등 처리
+            statusDisplay.textContent = `❌ 오류 발생: ${error.message}. 콘솔을 확인하세요.`;
+            statusDisplay.style.backgroundColor = '#ffcdd2';
+            console.error('Fetch 또는 API 처리 오류:', error);
+        } finally {
+            // UI 상태 변경: 로딩 종료
+            submitButton.disabled = false;
+            submitButton.textContent = "AI 예상 질문 생성"; 
         }
-    </script>
+    }
+
+
+    // Gemini의 JSON 응답을 화면에 깔끔하게 뿌려주는 함수
+    function displayResults(data) {
+        const mockQuestionsDiv = document.getElementById('mock-questions');
+        const answerExamplesDiv = document.getElementById('answer-examples');
+        
+        // JSON 응답 전체를 임시로 표시
+        const formattedJson = JSON.stringify(data, null, 2);
+
+        mockQuestionsDiv.innerHTML = `
+            <h3>AI 분석 응답 (JSON 원본)</h3>
+            <pre style="white-space: pre-wrap; word-wrap: break-word; font-size: 0.8em; background: #fafafa; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">${formattedJson}</pre>
+        `;
+        
+        answerExamplesDiv.innerHTML = `
+            <h3>응답 처리 안내</h3>
+            <p>백엔드에서 JSON 응답을 성공적으로 수신했습니다. 이 JSON 데이터(좌측)에는 예상 질문과 답변 전략이 포함되어 있습니다.</p>
+            <p>다음 단계는 <strong>수신된 JSON 구조에 맞춰</strong> <code>displayResults</code> 함수를 업데이트하여 질문과 전략을 분리해 화면에 표시하는 것입니다.</p>
+        `;
+    }
+</script>
 </body>
-</html>q
+</html>
