@@ -270,8 +270,7 @@
 
     <script>
         // Replit 내부 통신 시에는 상대 경로(Relative Path)를 사용합니다.
-        // 서버 URL을 지정할 필요 없이, 같은 호스트의 경로를 사용합니다.
-        const SERVER_URL = ""; 
+        const SERVER_URL = "https://20c1e870-4c52-4f3e-950a-d7b34da312be-00-7tu0mb8udfqp.sisko.replit.dev/generate_minutes"; 
 
         async function register(event) {
             event.preventDefault(); 
@@ -309,10 +308,12 @@
 
             // 기존 결과 및 초기 플레이스홀더 제거 (로딩 시)
             if (mockQuestionsDiv) {
-                mockQuestionsDiv.querySelectorAll('ul, .initial-placeholder, pre').forEach(el => el.remove());
+                // 이전 결과와 임시 JSON 표시를 모두 제거
+                mockQuestionsDiv.innerHTML = '<h3>예상 면접 질문</h3>'; 
             }
             if (answerExamplesDiv) {
-                answerExamplesDiv.querySelectorAll('ul, .initial-placeholder, pre').forEach(el => el.remove());
+                // 이전 결과와 임시 JSON 표시를 모두 제거
+                answerExamplesDiv.innerHTML = '<h3>답변 예시</h3>';
             }
 
             try {
@@ -331,7 +332,7 @@
                     
                     // HTML 응답을 받았을 경우 (405, 500 에러 페이지)
                     if (responseText.startsWith('<!DOCTYPE html>') || responseText.startsWith('<html')) {
-                        throw new Error(`서버가 JSON이 아닌 HTML 응답을 보냈습니다 (405 또는 ${response.status} 오류 가능).`);
+                        throw new Error(`서버가 JSON이 아닌 HTML 응답을 보냈습니다 (HTTP ${response.status} 오류).`);
                     }
 
                     // 서버가 JSON 오류(FastAPI HTTPException)를 보냈다면 파싱 시도
@@ -378,6 +379,9 @@
             // JSON 응답 전체를 임시로 표시
             const formattedJson = JSON.stringify(data, null, 2);
 
+            // **TODO:** 이 부분은 받은 JSON 구조에 맞춰 질문과 답변 전략을 분리하여 리스트로 출력하도록 수정해야 합니다.
+            // 현재는 임시로 JSON 원본을 출력합니다.
+            
             if (mockQuestionsDiv) {
                 mockQuestionsDiv.innerHTML += `
                     <h3>AI 분석 응답 (JSON 원본)</h3>
