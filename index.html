@@ -269,14 +269,12 @@
     </div>
 
     <script>
-        // Replit 환경에서 최적인 '상대 경로' 사용
-        const SERVER_URL = "https://20c1e870-4c52-4f3e-950a-d7b34da312be-00-7tu0mb8udfqp.sisko.replit.dev/generate_minutes";
+        const SERVER_URL = 'https://20c1e870-4c52-4f3e-950a-d7b34da312be-00-7tu0mb8udfqp.sisko.replit.dev/generate_minutes';
 
         async function register(event) {
-            // HTML form에서 onclick="register(event)"로 호출되므로 event.preventDefault() 필요
             event.preventDefault(); 
             
-            // 🚨 null 체크 로직이 포함된 안전한 코드
+            // 🚨 null 체크 로직이 포함된 안전한 코드 (요소 누락 오류 방지)
             const submitButton = document.getElementById('submit-button');
             const statusDisplay = document.getElementById('status-display');
             const mockQuestionsDiv = document.getElementById('mock-questions');
@@ -292,7 +290,7 @@
 
             // 간단한 유효성 검사
             if (!data.company || !data.role || !data.question || !data.answer) {
-                if (statusDisplay) { // null 체크 추가
+                if (statusDisplay) {
                     statusDisplay.textContent = "⚠️ 모든 필드를 채워주세요.";
                     statusDisplay.style.backgroundColor = '#ffebee';
                 }
@@ -302,17 +300,19 @@
             // UI 상태 변경: 로딩 시작
             if (submitButton) submitButton.disabled = true;
             if (submitButton) submitButton.textContent = "AI 분석 중... 잠시만 기다려주세요."; 
-            if (statusDisplay) { // null 체크 추가
+            if (statusDisplay) {
                 statusDisplay.textContent = "⌛ Gemini가 예상 질문을 분석하고 있습니다...";
                 statusDisplay.style.backgroundColor = '#e3f2fd';
             }
 
             // 기존 결과 및 초기 플레이스홀더 제거 (로딩 시)
             if (mockQuestionsDiv) {
-                mockQuestionsDiv.innerHTML = '<h3>예상 면접 질문</h3>';
+                // mockQuestionsDiv.innerHTML = '<h3>예상 면접 질문</h3>'; // displayResults에서 처리
+                mockQuestionsDiv.querySelectorAll('ul, .initial-placeholder').forEach(el => el.remove());
             }
             if (answerExamplesDiv) {
-                answerExamplesDiv.innerHTML = '<h3>답변 예시</h3>';
+                // answerExamplesDiv.innerHTML = '<h3>답변 예시</h3>'; // displayResults에서 처리
+                answerExamplesDiv.querySelectorAll('ul, .initial-placeholder').forEach(el => el.remove());
             }
 
             try {
@@ -326,8 +326,27 @@
                 });
 
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.detail || `HTTP 오류: ${response.status}`);
+                    // 서버가 4xx 또는 5xx 오류를 보냈을 경우
+                    // 🚨 405 에러 시 HTML을 받으므로, text()로 받고 파싱 오류 메시지 처리
+                    const responseText = await response.text(); 
+                    if (statusDisplay) {
+                        statusDisplay.textContent = `❌ 오류 발생: ${response.status} ${response.statusText}. 백엔드 콘솔을 확인하세요.`;
+                        statusDisplay.style.backgroundColor = '#ffcdd2';
+                    }
+                    // 405 에러가 발생하면 서버가 JSON이 아닌 HTML을 보내기 때문에, 
+                    // 아래 로직으로 SyntaxError 메시지를 더 명확하게 변경합니다.
+                    if (responseText.startsWith('<!DOCTYPE html>') || responseText.startsWith('<html')) {
+                        throw new Error("서버가 JSON이 아닌 HTML 응답을 보냈습니다 (405 또는 500 오류 가능).");
+                    }
+
+                    // 서버가 JSON 오류를 보냈다면 파싱 시도 (FastAPI JSON HTTPException)
+                    try {
+                        const errorData = JSON.parse(responseText);
+                        throw new Error(errorData.detail || `HTTP 오류: ${response.status}`);
+                    } catch (e) {
+                         // JSON 파싱 자체가 실패했을 때 (이 경우 위에서 잡힘)
+                        throw new Error(`서버 응답 파싱 실패. (Status: ${response.status})`);
+                    }
                 }
 
                 const result = await response.json(); 
@@ -342,9 +361,9 @@
                 displayResults(result); 
 
             } catch (error) {
-                // 통신 오류, JSON 파싱 오류, 서버 오류 등 처리
+                // 통신 오류, 서버 오류 등 처리
                 if (statusDisplay) {
-                    statusDisplay.textContent = `❌ 오류 발생: ${error.message}. 콘솔을 확인하세요.`;
+                    statusDisplay.textContent = `❌ 오류 발생: ${error.message}. 백엔드(main.py) 상태를 확인하세요.`;
                     statusDisplay.style.backgroundColor = '#ffcdd2';
                 }
                 console.error('Fetch 또는 API 처리 오류:', error);
